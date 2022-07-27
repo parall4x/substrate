@@ -85,6 +85,10 @@ pub use behaviour::{
 	IfDisconnected, InboundFailure, OutboundFailure, RequestFailure, ResponseFailure,
 };
 
+#[doc(hidden)]
+pub use ::core::fmt;
+
+
 mod metrics;
 mod out_events;
 mod signature;
@@ -99,6 +103,17 @@ pub use libp2p::{
 	kad::record::Key as KademliaKey,
 };
 pub use signature::Signature;
+
+struct ByteBuf<'a>(&'a [u8]);
+
+impl<'a> std::fmt::LowerHex for ByteBuf<'a> {
+    fn fmt(&self, fmtr: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        for byte in self.0 {
+            fmtr.write_fmt(format_args!("{:02x}", byte))?
+        }
+        Ok(())
+    }
+}
 
 /// Substrate network service. Handles network IO and manages connectivity.
 pub struct NetworkService<B: BlockT + 'static, H: ExHashT> {
@@ -1866,7 +1881,7 @@ where
 					if let Some(metrics) = this.metrics.as_ref() {
 						for (protocol, message) in &messages {
 
-							info!("MESSAGE RECEIVED: proto: {:?} msg: {:?}", protocol, message);
+							info!("MESSAGE RECEIVED: proto: {:?} msg: {:x}", protocol, ByteBuf(&message));
 
 							metrics
 								.notifications_sizes
