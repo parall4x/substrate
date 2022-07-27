@@ -25,6 +25,7 @@ use prometheus_endpoint::{register, Counter, PrometheusError, Registry, U64};
 use sc_network::ObservedRole;
 use sp_runtime::traits::{Block as BlockT, Hash, HashFor};
 use std::{borrow::Cow, collections::HashMap, iter, sync::Arc, time, time::Instant};
+use log::{info};
 
 // FIXME: Add additional spam/DoS attack protection: https://github.com/paritytech/substrate/issues/1115
 // NOTE: The current value is adjusted based on largest production network deployment (Kusama) and
@@ -47,6 +48,17 @@ mod rep {
 	pub const GOSSIP_SUCCESS: Rep = Rep::new(1 << 4, "Successfull gossip");
 	/// Reputation change when a peer sends us a gossip message that we already knew about.
 	pub const DUPLICATE_GOSSIP: Rep = Rep::new(-(1 << 2), "Duplicate gossip");
+}
+
+struct ByteBuf<'a>(&'a [u8]);
+
+impl<'a> std::fmt::LowerHex for ByteBuf<'a> {
+    fn fmt(&self, fmtr: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        for byte in self.0 {
+            fmtr.write_fmt(format_args!("{:02x}", byte))?
+        }
+        Ok(())
+    }
 }
 
 struct PeerConsensus<H> {
@@ -341,6 +353,8 @@ impl<B: BlockT> ConsensusGossip<B> {
 		}
 
 		for message in messages {
+			info!("MESSAGE RECEIVED: peerid: {:?} msg: {:x}", who, ByteBuf(&message));
+
 			let message_hash = HashFor::<B>::hash(&message[..]);
 
 			if self.known_messages.contains(&message_hash) {
