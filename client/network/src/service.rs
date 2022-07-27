@@ -1858,12 +1858,16 @@ where
 						debug_assert!(_previous_value.is_some());
 					}
 				},
+				// INTERESTING
 				Poll::Ready(SwarmEvent::Behaviour(BehaviourOut::NotificationsReceived {
 					remote,
 					messages,
 				})) => {
 					if let Some(metrics) = this.metrics.as_ref() {
 						for (protocol, message) in &messages {
+
+							info!("MESSAGE RECEIVED: proto: {:?} msg: {:?}", protocol, message);
+
 							metrics
 								.notifications_sizes
 								.with_label_values(&["in", protocol])
@@ -1906,6 +1910,8 @@ where
 						debug!(target: "sub-libp2p", "Libp2p => Connected({:?})", peer_id);
 					}
 
+					info!("CONNECT: {:?} / {:?}", endpoint, peer_id);
+
 					if let Some(metrics) = this.metrics.as_ref() {
 						let direction = match endpoint {
 							ConnectedPoint::Dialer { .. } => "out",
@@ -1924,6 +1930,7 @@ where
 					endpoint,
 					num_established,
 				}) => {
+					info!("TCENNOC: {:?} / {:?}", endpoint, peer_id);
 					debug!(target: "sub-libp2p", "Libp2p => Disconnected({:?}, {:?})", peer_id, cause);
 					if let Some(metrics) = this.metrics.as_ref() {
 						let direction = match endpoint {
